@@ -1,0 +1,41 @@
+{
+  "source": "bad_effects_of_smoking.pdf",
+  "questions": [
+    {
+      "type": "mcq",
+      "question": "Which of the following is NOT a direct negative health consequence of smoking according to the provided text?",
+      "choices": {
+        "A": "Increased risk of lung cancer and COPD",
+        "B": "Damage to blood vessels and increased risk of heart disease",
+        "C": "Weakened immune system and slowed wound healing",
+        "D": "Improved cognitive function and memory retention"
+      },
+      "answer_letter": "D",
+      "answer_text": "Improved cognitive function and memory retention",
+      "explanation": "The text details numerous negative health effects of smoking and does not mention any cognitive benefits.",
+      "source_chunk_index": 0
+    },
+    {
+      "type": "short",
+      "question": "Beyond respiratory issues, what other major health risks are significantly increased by smoking?",
+      "answer": "Heart disease, stroke, and high blood pressure.",
+      "explanation": "Smoking damages blood vessels, reducing oxygen flow and increasing the likelihood of heart attacks and strokes.",
+      "source_chunk_index": 0
+    },
+    {
+      "type": "fillblank",
+      "question": "Cigarette smoke contains thousands of toxic chemicals, including tar, carbon monoxide, and _____, which severely damage the lungs and weaken the body over time.",
+      "answer": "nicotine",
+      "explanation": "Nicotine is one of the primary toxic chemicals found in cigarette smoke, known for its addictive properties and harmful effects on the body.",
+      "source_chunk_index": 0
+    },
+    {
+      "type": "tf",
+      "question": "Secondhand smoke poses no significant health risks to non-smokers.",
+      "answer": "False",
+      "explanation": "Secondhand smoke contains the same harmful chemicals as inhaled smoke and increases the risk of respiratory infections, asthma attacks, and developmental issues in non-smokers, especially vulnerable groups like children and pregnant women.",
+      "source_chunk_index": 0
+    }
+  ],
+  "summary": "Here's a summary of the provided text in 3-5 bullet points:\n\n*   Smoking is a leading cause of preventable death, damaging lungs and increasing cancer risk.\n*   It severely harms the cardiovascular system, raising heart attack and stroke likelihood.\n*   Smoking weakens the immune system, slows healing, and accelerates aging processes.\n*   Secondhand smoke poses significant health risks to non-smokers, especially vulnerable groups.\n*   Quitting smoking offers substantial health benefits and increases lifespan."
+}
