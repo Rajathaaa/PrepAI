@@ -14,7 +14,7 @@ UPLOAD_FOLDER = "uploads"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 
-def run_quiz_generation(file_path, file_id):
+def run_quiz_generation(file_path, file_id, num_questions, question_types):
     """Run rag_quiz_generator_gemini_opt.py in background and update progress."""
     quiz_json = os.path.join(UPLOAD_FOLDER, f"{file_id}_quiz.json")
     progress_json = os.path.join(UPLOAD_FOLDER, f"{file_id}_progress.json")
@@ -28,14 +28,18 @@ def run_quiz_generation(file_path, file_id):
         with open(progress_json, "w") as f:
             json.dump({"status": "running", "progress": 30}, f)
         
+        # Prepare question types string
+        types_str = ",".join(question_types)
+        
         # Call the RAG quiz generator script (your gemini3.py)
         result = subprocess.run(
             [
                 sys.executable, 
-                "gemini3.py",  # Using your actual filename
+                "gemini3.py",
                 "--input", file_path, 
                 "--out", quiz_json,
-                "--max_questions", "20"
+                "--max_questions", str(num_questions),
+                "--types", types_str
             ],
             capture_output=True,
             text=True,
@@ -69,6 +73,25 @@ def upload_file():
     if file.filename == "":
         return jsonify({"error": "No selected file"}), 400
 
+    # Get quiz parameters from form data
+    try:
+        num_questions = int(request.form.get("num_questions", 20))
+        question_types_str = request.form.get("question_types", "mcq,short,fillblank,tf")
+        question_types = [t.strip() for t in question_types_str.split(",") if t.strip()]
+        
+        # Validate question types
+        valid_types = ["mcq", "short", "fillblank", "tf"]
+        question_types = [qt for qt in question_types if qt in valid_types]
+        
+        if not question_types:
+            return jsonify({"error": "No valid question types selected"}), 400
+            
+        if num_questions < 1 or num_questions > 100:
+            return jsonify({"error": "Number of questions must be between 1 and 100"}), 400
+            
+    except ValueError:
+        return jsonify({"error": "Invalid parameters"}), 400
+
     # Generate unique file ID
     file_id = str(uuid.uuid4())
     
@@ -81,15 +104,21 @@ def upload_file():
     file_path = os.path.join(UPLOAD_FOLDER, f"{file_id}{file_ext}")
     file.save(file_path)
     print(f"📄 Saved file at: {file_path}")
+    print(f"📊 Generating {num_questions} questions of types: {question_types}")
 
     # Start background thread for quiz generation
-    thread = threading.Thread(target=run_quiz_generation, args=(file_path, file_id))
+    thread = threading.Thread(
+        target=run_quiz_generation, 
+        args=(file_path, file_id, num_questions, question_types)
+    )
     thread.daemon = True
     thread.start()
 
     return jsonify({
         "file_id": file_id, 
-        "message": "File uploaded, quiz generation started"
+        "message": "File uploaded, quiz generation started",
+        "num_questions": num_questions,
+        "question_types": question_types
     })
 
 

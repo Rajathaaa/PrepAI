@@ -2,21 +2,21 @@ import React, { useState } from "react";
 import UploadForm from "./components/UploadForm";
 import Quiz from "./components/Quiz";
 import Result from "./components/Result";
-import { ScoreProvider } from "./components/ScoreContext";
+import { ScoreProvider, useScore } from "./components/ScoreContext";
 
 export default function App() {
   const [quizData, setQuizData] = useState(null);
   const [error, setError] = useState("");
   const [showResult, setShowResult] = useState(false);
-
+  const { score, setScore } = useScore();
   const handleRestart = () => {
     setQuizData(null);
     setError("");
     setShowResult(false);
+    setScore(0);
   };
 
   return (
-    <ScoreProvider>
     <div style={{ backgroundImage: "url('src/assets/bg.jpg')" }} className="min-h-screen flex flex-col items-center p-6 bg-cover bg-center justify-center">
       <div className="max-w-4xl w-full">
         <h1 className="text-5xl font-bold mb-2 text-center text-slate-100">
@@ -63,6 +63,6 @@ export default function App() {
           />
         )}
       </div>
-    </div></ScoreProvider>
+    </div>
   );
 }

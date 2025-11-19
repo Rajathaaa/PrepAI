@@ -5,7 +5,7 @@ function Quiz({ questions, onComplete }) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [userAnswers, setUserAnswers] = useState({});
   const [showExplanation, setShowExplanation] = useState(false);
- const { score, setScore } = useScore();
+  const { score, setScore } = useScore();
 
   if (!questions || questions.length === 0) {
     return (
@@ -35,6 +35,12 @@ function Quiz({ questions, onComplete }) {
     } else {
       setCurrentIndex(currentIndex + 1);
     }
+  };
+
+  // Helper function to compare answers (case-insensitive, trim whitespace)
+  const compareAnswers = (userAns, correctAns) => {
+    if (!userAns || !correctAns) return false;
+    return userAns.trim().toLowerCase() === correctAns.trim().toLowerCase();
   };
 
   const renderQuestion = () => {
@@ -73,7 +79,7 @@ function Quiz({ questions, onComplete }) {
                   if (!showExplanation) {
                     setUserAnswers({ ...userAnswers, [currentIndex]: option });
 
-                    if (option === currentQuestion.answer) {
+                    if (compareAnswers(option, currentQuestion.answer)) {
                       setScore((prev) => prev + 1);
                     }
 
@@ -83,7 +89,7 @@ function Quiz({ questions, onComplete }) {
                 disabled={showExplanation}
                 className={`w-full text-left p-4 rounded-lg border-2 transition-all ${
                   showExplanation
-                    ? option === currentQuestion.answer
+                    ? compareAnswers(option, currentQuestion.answer)
                       ? "border-green-500 bg-green-50"
                       : userAnswers[currentIndex] === option
                       ? "border-red-500 bg-red-50"
@@ -100,7 +106,6 @@ function Quiz({ questions, onComplete }) {
       case "short":
         return (
           <div>
-            {/* <p className="mb-2 font-medium">{currentQuestion.question}</p> */}
             <input
               type="text"
               placeholder="Type your answer here..."
@@ -115,14 +120,25 @@ function Quiz({ questions, onComplete }) {
               <button
                 className="mt-3 bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700"
                 onClick={() => {
-                  const userAnswer = userAnswers[currentIndex]?.trim().toLowerCase();
-                  const correctAnswer = currentQuestion.answer.trim().toLowerCase();
-                  if (userAnswer === correctAnswer) setScore((prev) => prev + 1);
+                  if (compareAnswers(userAnswers[currentIndex], currentQuestion.answer)) {
+                    setScore((prev) => prev + 1);
+                  }
                   setShowExplanation(true);
                 }}
               >
                 Submit Answer
               </button>
+            )}
+            {showExplanation && (
+              <div className={`mt-3 p-3 rounded-lg border-2 ${
+                compareAnswers(userAnswers[currentIndex], currentQuestion.answer)
+                  ? "border-green-500 bg-green-50"
+                  : "border-red-500 bg-red-50"
+              }`}>
+                <p className="text-sm font-medium">
+                  Your answer: {userAnswers[currentIndex] || "(empty)"}
+                </p>
+              </div>
             )}
           </div>
         );
@@ -143,15 +159,26 @@ function Quiz({ questions, onComplete }) {
             {!showExplanation && (
               <button
                 onClick={() => {
-                  const userAnswer = userAnswers[currentIndex]?.trim().toLowerCase();
-                  const correctAnswer = currentQuestion.answer.trim().toLowerCase();
-                  if (userAnswer === correctAnswer) setScore((prev) => prev + 1);
+                  if (compareAnswers(userAnswers[currentIndex], currentQuestion.answer)) {
+                    setScore((prev) => prev + 1);
+                  }
                   setShowExplanation(true);
                 }}
                 className="mt-3 bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700"
               >
                 Submit Answer
               </button>
+            )}
+            {showExplanation && (
+              <div className={`mt-3 p-3 rounded-lg border-2 ${
+                compareAnswers(userAnswers[currentIndex], currentQuestion.answer)
+                  ? "border-green-500 bg-green-50"
+                  : "border-red-500 bg-red-50"
+              }`}>
+                <p className="text-sm font-medium">
+                  Your answer: {userAnswers[currentIndex] || "(empty)"}
+                </p>
+              </div>
             )}
           </div>
         );
@@ -202,4 +229,4 @@ function Quiz({ questions, onComplete }) {
   );
 }
 
-export default Quiz;
+export default Quiz;

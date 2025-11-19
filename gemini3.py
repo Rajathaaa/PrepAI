@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Optimized RAG Quiz Generator (Gemini-backed) - FIXED JSON PARSING
+Optimized RAG Quiz Generator (Gemini-backed) - FIXED QUESTION COUNT
 """
 
 import os
@@ -111,7 +111,7 @@ def extract_text_from_pdf(path: str) -> str:
         for p in pdf.pages:
             txt = p.extract_text()
             if txt:
-                parts.append(txt)
+                 parts.append(txt)
     return "\n\n".join(parts)
 
 def extract_text_from_docx(path: str) -> str:
@@ -372,7 +372,7 @@ def generate_one_question(context: str, qtype: str, emb_model: SentenceTransform
     raise ValueError("Unsupported qtype")
 
 # ---------- Orchestrator ----------
-def generate_quiz(input_path: str, out_json: str = "quiz.json", max_questions: int = 20,
+def generate_quiz(input_path: str, out_json: str = "quiz.json", max_questions: int = 50,
                   question_types: List[str] = ["mcq", "short", "fillblank", "tf"], summarize_first: bool = True):
     print("[start] Extracting text...", flush=True)
     raw = extract_text(input_path)
@@ -395,26 +395,35 @@ def generate_quiz(input_path: str, out_json: str = "quiz.json", max_questions: i
         seed_ctx = " ".join(chunks[:min(4, len(chunks))])
         quiz["summary"] = call_gemini(PROMPT_SUMMARY.format(context=seed_ctx))
 
+    # FIXED: Generate questions in a round-robin fashion until we reach max_questions
     qcount = 0
-    for i, chunk in enumerate(chunks):
-        if qcount >= max_questions:
-            break
-        hits = vs.search(chunk, top_k=8)
-        cand_texts = [vs.get_text(idx) for idx, _ in hits]
-        top_ctxs = reranker.rerank(chunk, cand_texts) if cand_texts else [chunk]
-        combined_ctx = "\n\n".join(top_ctxs)
-        for qtype in question_types:
-            if qcount >= max_questions:
-                break
-            try:
-                item = generate_one_question(combined_ctx, qtype, embed_model, reranker.model)
-                item["source_chunk_index"] = i
-                quiz["questions"].append(item)
-                qcount += 1
-                print(f"[ok] Generated {qtype} #{qcount}", flush=True)
-            except Exception as e:
-                print(f"[warn] generation failed for chunk {i}, qtype {qtype}: {e}", flush=True)
-                continue
+    chunk_idx = 0
+    type_idx = 0
+    
+    while qcount < max_questions and chunk_idx < len(chunks):
+        chunk = chunks[chunk_idx]
+        qtype = question_types[type_idx % len(question_types)]
+        
+        try:
+            hits = vs.search(chunk, top_k=8)
+            cand_texts = [vs.get_text(idx) for idx, _ in hits]
+            top_ctxs = reranker.rerank(chunk, cand_texts) if cand_texts else [chunk]
+            combined_ctx = "\n\n".join(top_ctxs)
+            
+            item = generate_one_question(combined_ctx, qtype, embed_model, reranker.model)
+            item["source_chunk_index"] = chunk_idx
+            quiz["questions"].append(item)
+            qcount += 1
+            print(f"[ok] Generated {qtype} #{qcount}/{max_questions}", flush=True)
+        except Exception as e:
+            print(f"[warn] generation failed for chunk {chunk_idx}, qtype {qtype}: {e}", flush=True)
+        
+        # Move to next question type
+        type_idx += 1
+        
+        # If we've gone through all question types, move to next chunk
+        if type_idx % len(question_types) == 0:
+            chunk_idx += 1
 
     with open(out_json, "w", encoding="utf-8") as f:
         json.dump(quiz, f, ensure_ascii=False, indent=2)
