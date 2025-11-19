@@ -1,9 +1,11 @@
 // src/services/api.js
+const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:8000";
+
 export async function uploadPdf(file) {
   const formData = new FormData();
   formData.append("file", file);
 
-  const res = await fetch("http://localhost:8000/upload", {
+  const res = await fetch(`${API_BASE}/upload`, {
     method: "POST",
     body: formData
   });
@@ -17,7 +19,7 @@ export async function uploadPdf(file) {
 }
 
 export async function fetchGeneratedQuiz() {
-  const res = await fetch("http://localhost:8000/quiz");
+  const res = await fetch(`${API_BASE}/quiz`);
   if (!res.ok) {
     const text = await res.text();
     throw new Error(text || "Could not fetch generated quiz");

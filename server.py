@@ -8,7 +8,18 @@ import threading
 import sys
 
 app = Flask(__name__)
-CORS(app)
+
+FRONTEND_URL = os.getenv("FRONTEND_URL")
+
+if FRONTEND_URL:
+    # Allow your Vercel frontend EXACT origin (most secure)
+    CORS(app, origins=[FRONTEND_URL])
+    print(f"🔒 CORS Enabled for: {FRONTEND_URL}")
+
+else:
+    # Local development (localhost:5173)
+    CORS(app, origins=["http://localhost:5173"])
+    print("🟡 CORS Enabled for local dev (localhost:5173)")
 
 UPLOAD_FOLDER = "uploads"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)

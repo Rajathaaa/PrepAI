@@ -1,3 +1,5 @@
+const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:5000";
+
 import React, { useState, useEffect } from "react";
 
 function UploadForm({ onQuizReady, setError }) {
@@ -46,7 +48,7 @@ function UploadForm({ onQuizReady, setError }) {
     formData.append("question_types", selectedTypes.join(','));
 
     try {
-      const res = await fetch("http://localhost:5000/upload", {
+      const res = await fetch(`${API_BASE}/upload`, {
         method: "POST",
         body: formData,
       });
@@ -72,7 +74,7 @@ function UploadForm({ onQuizReady, setError }) {
 
     const interval = setInterval(async () => {
       try {
-        const res = await fetch(`http://localhost:5000/quiz/${fileId}`);
+        const res = await fetch(`${API_BASE}/quiz/${fileId}`);
         const data = await res.json();
 
         if (data.status === "done") {
