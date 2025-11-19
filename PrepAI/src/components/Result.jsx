@@ -1,6 +1,8 @@
 import React from "react";
+import { useScore } from "./ScoreContext";
 
-function Result({ summary, onRestart }) {
+function Result({ questions, summary, onRestart }) {
+  const { score } = useScore();
   return (
     <div className="space-y-6 max-w-2xl mx-auto">
       <div className="bg-white p-8 rounded-lg shadow-lg text-center">
@@ -11,7 +13,7 @@ function Result({ summary, onRestart }) {
         <p className="text-gray-600 mb-6">
           Great job! You've finished all the questions.
         </p>
-        {/* <p>Your Result:${score}</p> */}
+        <p className="text-3xl font-bold text-green-900">{`Your Result : ${score}/${questions.length}`}</p>
       </div>
 
       

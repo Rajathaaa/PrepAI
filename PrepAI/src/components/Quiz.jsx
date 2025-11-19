@@ -1,10 +1,11 @@
 import React, { useState } from "react";
+import { useScore } from "./ScoreContext";
 
 function Quiz({ questions, onComplete }) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [userAnswers, setUserAnswers] = useState({});
   const [showExplanation, setShowExplanation] = useState(false);
-  const [score, setScore] = useState(0);
+ const { score, setScore } = useScore();
 
   if (!questions || questions.length === 0) {
     return (
@@ -99,7 +100,7 @@ function Quiz({ questions, onComplete }) {
       case "short":
         return (
           <div>
-            <p className="mb-2 font-medium">{currentQuestion.question}</p>
+            {/* <p className="mb-2 font-medium">{currentQuestion.question}</p> */}
             <input
               type="text"
               placeholder="Type your answer here..."
