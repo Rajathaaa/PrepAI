@@ -1,6 +1,5 @@
-const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:5000";
-
 import React, { useState, useEffect } from "react";
+import { useScore } from "./ScoreContext";
 
 function UploadForm({ onQuizReady, setError }) {
   const [file, setFile] = useState(null);
@@ -9,6 +8,8 @@ function UploadForm({ onQuizReady, setError }) {
   const [fileId, setFileId] = useState(null);
   const [statusMessage, setStatusMessage] = useState("");
   const [numQuestions, setNumQuestions] = useState(10);
+  const [urlInput, setUrlInput] = useState("");
+  const { clickSound } = useScore();
   const [questionTypes, setQuestionTypes] = useState({
     mcq: true,
     short: true,
@@ -25,11 +26,15 @@ function UploadForm({ onQuizReady, setError }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!file) {
-      setError("Please select a file first.");
-      return;
-    }
+    const formData = new FormData();
+    clickSound.play();
+    if (file) formData.append("file", file);
+    if (urlInput.trim() !== "") formData.append("url", urlInput.trim());
 
+    if (!file && !urlInput.trim()) {
+  setError("Please upload a file OR enter a URL.");
+  return;
+}
     // Validate at least one question type is selected
     const selectedTypes = Object.keys(questionTypes).filter(type => questionTypes[type]);
     if (selectedTypes.length === 0) {
@@ -42,19 +47,19 @@ function UploadForm({ onQuizReady, setError }) {
     setProgress(0);
     setStatusMessage("Uploading file...");
 
-    const formData = new FormData();
-    formData.append("file", file);
+    
+    
     formData.append("num_questions", numQuestions.toString());
     formData.append("question_types", selectedTypes.join(','));
 
     try {
-      const res = await fetch(`${API_BASE}/upload`, {
+      const res = await fetch("http://localhost:5000/upload", {
         method: "POST",
         body: formData,
       });
-      
+
       const data = await res.json();
-      
+
       if (!res.ok) {
         throw new Error(data.error || "Upload failed");
       }
@@ -74,7 +79,7 @@ function UploadForm({ onQuizReady, setError }) {
 
     const interval = setInterval(async () => {
       try {
-        const res = await fetch(`${API_BASE}/quiz/${fileId}`);
+        const res = await fetch(`http://localhost:5000/quiz/${fileId}`);
         const data = await res.json();
 
         if (data.status === "done") {
@@ -100,29 +105,40 @@ function UploadForm({ onQuizReady, setError }) {
   }, [fileId, onQuizReady, setError]);
 
   return (
-    <div className="p-8 rounded-lg backdrop-blur-lg bg-white/10 shadow-md max-w-md mx-auto border-1 border-white/50">
+    <div className="p-8 rounded-3xl  mb-5 bg-[#E5DDD0] shadow-md max-w-md mx-auto border-3 border-[#99968D]">
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label className="block text-sm font-medium text-white mb-2">
+          <label className="block text-sm font-medium text-[#040404] mb-2">
             Upload Document (PDF, DOCX, TXT)
           </label>
           <input
             type="file"
             accept=".pdf,.docx,.txt"
+            onClick={()=>{clickSound.play();}}
             onChange={(e) => setFile(e.target.files[0])}
-            className="w-full border border-gray-300 p-2 rounded focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+            className="w-full border-3 bg-[#FFFFFF] border-[#99968D] p-2 rounded-full focus:ring focus:ring-[#040404] focus:border-transparent"
             disabled={loading}
           />
-        </div>
 
+          <input
+          type="text"
+          onClick={()=>{clickSound.play();}}
+          placeholder="Enter URL (optional)"
+          value={urlInput}
+          onChange={(e) => setUrlInput(e.target.value)}
+          className="url-input mt-2 border-3 bg-[#FFFFFF] border-[#99968D] w-full  p-2 rounded-full focus:ring focus:ring-[#040404] focus:border-transparent"
+        />
+
+        </div>
+        
         {file && (
-          <div className="text-sm text-green-300 p-2 rounded">
+          <div className="text-sm text-[#040404] p-2 rounded">
             Selected: {file.name}
           </div>
         )}
 
         <div>
-          <label className="block text-sm font-medium text-white mb-2">
+          <label className="block text-sm font-medium text-[#040404] mb-2">
             Number of Questions: {numQuestions}
           </label>
           <input
@@ -132,17 +148,17 @@ function UploadForm({ onQuizReady, setError }) {
             value={numQuestions}
             onChange={(e) => setNumQuestions(parseInt(e.target.value))}
             disabled={loading}
-            className="w-full h-2 bg-gray-300 rounded-lg appearance-none cursor-pointer accent-indigo-600"
+            className="w-full h-1 bg-[#99968D] rounded-lg appearance-none cursor-pointer accent-[#040404]"
           />
-          <div className="flex justify-between text-xs text-gray-300 mt-1">
+          <div className="flex justify-between text-xs text-[#040404] mt-1">
             <span>1</span>
             <span>25</span>
             <span>50</span>
           </div>
         </div>
 
-        <div>
-          <label className="block text-sm font-medium text-white mb-3">
+        <div className="bg-[#FFFFFF] border-[#99968D] rounded-2xl p-2 border-3">
+          <label className="block text-sm  font-medium text-[#040404] mb-3">
             Question Types
           </label>
           <div className="grid grid-cols-2 gap-2">
@@ -152,19 +168,20 @@ function UploadForm({ onQuizReady, setError }) {
                 checked={questionTypes.mcq}
                 onChange={() => handleQuestionTypeChange('mcq')}
                 disabled={loading}
-                className="w-4 h-4 text-indigo-600 rounded"
+                className="w-4 h-4 accent-[#040404] rounded"
               />
-              <span className="text-sm text-white">Multiple Choice</span>
+              <span className="text-sm text-[#040404]">Multiple Choice</span>
             </label>
             <label className="flex items-center space-x-2 p-2 bg-white/20 rounded-lg cursor-pointer hover:bg-white/30 transition">
               <input
                 type="checkbox"
                 checked={questionTypes.short}
+                // defaultChecked={false}
                 onChange={() => handleQuestionTypeChange('short')}
                 disabled={loading}
-                className="w-4 h-4 text-indigo-600 rounded"
+                className="w-4 h-4 accent-[#040404] rounded"
               />
-              <span className="text-sm text-white">Short Answer</span>
+              <span className="text-sm text-[#040404]">Short Answer</span>
             </label>
             <label className="flex items-center space-x-2 p-2 bg-white/20 rounded-lg cursor-pointer hover:bg-white/30 transition">
               <input
@@ -172,9 +189,9 @@ function UploadForm({ onQuizReady, setError }) {
                 checked={questionTypes.fillblank}
                 onChange={() => handleQuestionTypeChange('fillblank')}
                 disabled={loading}
-                className="w-4 h-4 text-indigo-600 rounded"
+                className="w-4 h-4 accent-[#040404] rounded"
               />
-              <span className="text-sm text-white">Fill in Blank</span>
+              <span className="text-sm text-[#040404]">Fill in Blank</span>
             </label>
             <label className="flex items-center space-x-2 p-2 bg-white/20 rounded-lg cursor-pointer hover:bg-white/30 transition">
               <input
@@ -182,17 +199,18 @@ function UploadForm({ onQuizReady, setError }) {
                 checked={questionTypes.tf}
                 onChange={() => handleQuestionTypeChange('tf')}
                 disabled={loading}
-                className="w-4 h-4 text-indigo-600 rounded"
+                className="w-4 h-4 accent-[#040404] rounded"
               />
-              <span className="text-sm text-white">True/False</span>
+              <span className="text-sm text-[#040404]">True/False</span>
             </label>
           </div>
         </div>
 
         <button
           type="submit"
-          disabled={loading || !file}
-          className="w-full bg-indigo-600 text-white px-4 py-3 rounded-lg hover:bg-indigo-700 disabled:bg-gray-400 disabled:cursor-not-allowed font-semibold transition-colors"
+
+          disabled={loading || (!file && !urlInput.trim())}
+          className="w-full bg-[#040404] text-[#FFFFFF] px-4 py-3 rounded-full hover:cursor-pointer disabled:bg-[#99968D] disabled:text-[#040404] disabled:cursor-not-allowed font-semibold transition-colors"
         >
           {loading ? "Processing..." : "Upload & Generate Quiz"}
         </button>
@@ -200,13 +218,13 @@ function UploadForm({ onQuizReady, setError }) {
 
       {loading && (
         <div className="mt-6">
-          <div className="flex items-center justify-between text-sm text-gray-200 mb-2">
+          <div className="flex items-center justify-between text-sm text-[#040404] mb-2">
             <span>{statusMessage}</span>
             <span className="font-semibold">{progress}%</span>
           </div>
-          <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+          <div className="w-full bg-[#99968D] rounded-full h-3 overflow-hidden">
             <div
-              className="bg-indigo-600 h-full transition-all duration-500 ease-out"
+              className="bg-[#040404] h-full transition-all duration-500 ease-out"
               style={{ width: `${progress}%` }}
             />
           </div>
@@ -216,4 +234,4 @@ function UploadForm({ onQuizReady, setError }) {
   );
 }
 
-export default UploadForm;
+export default UploadForm;
